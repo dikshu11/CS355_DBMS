@@ -1,0 +1,109 @@
+
+-- SUBTASK A:
+
+CREATE TABLE transaction(
+	Series_reference varchar(20),
+	Period float,
+	Data_value float,
+	Suppressed varchar(20),
+	STATUS varchar(20),
+	UNITS varchar(20),
+	Magnitude integer,
+	Subject text,
+	Group1 text,
+	Series_title_1 text,
+	Series_title_2 text,
+	Series_title_3 text,
+	Series_title_4 text,
+	Series_title_5 text
+);
+
+
+LOAD DATA LOCAL INFILE "transactions.csv" INTO TABLE transaction FIELDS TERMINATED BY "," LINES TERMINATED BY "\n" IGNORE 1 ROWS;
+
+
+
+-- SUBTASK B:
+
+SET profiling = 1;
+SELECT * FROM transaction WHERE Series_reference = "ECTA.S19A1";
+SELECT * FROM transaction WHERE Data_value > 2000;
+INSERT into transaction values('ECTA.S1GA5', 2019.05, 23454, "", "C", "Dollars", 9, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" );
+UPDATE transaction SET Suppressed = "YES" WHERE Series_reference = "ECTA.S1GA5";
+UPDATE transaction SET Series_title_5 = "ABCD" WHERE  Data_value > 2000;
+
+SHOW PROFILES;
+
+
++----------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Query_ID | Duration   | Query                                                                                                                                                                        |
++----------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|        1 | 0.10515700 | UPDATE transaction SET Suppressed = "YES" WHERE Series_reference = "ECTA.S1GA2"                                                                                             |
+|        2 | 0.01166325 | UPDATE transaction SET Suppressed = "YES" WHERE Series_reference = "ECTA.S1GAX"                                                                                                             |
+|		 3 | 0.12098275 | UPDATE transaction SET Series_title_5 = "ABCD" WHERE Magnitude>3                                                                                                             |
+|        4 | 0.07457000 | UPDATE transaction SET Series_title_5 = "ABCD" WHERE  Data_value > 2000                                                                                                      |
+|        5 | 0.09860275 | UPDATE transaction SET Suppressed = "No" WHERE Series_reference = "ECTA.S1GA9"                                                                                               |
+|        6 | 0.01839700 | UPDATE transaction SET Series_title_5 = "AB1CD" WHERE Magnitude=3                                                                                                            |
+|        7 | 0.09142925 | INSERT into transaction values('ECTA.S1GA10', 2019.05, 23454, "", "C", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" ) |
+|        8 | 0.08706800 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "C", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|        9 | 0.08319350 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "C", "Dollars", 10, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       10 | 0.09315150 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "F", "Dollars", 10, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       11 | 0.07322200 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "F", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       12 | 0.07678475 | INSERT into transaction values('ECTA.S1GA1', 2019.05, 23454, "", "F", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       13 | 0.02072700 | SELECT * FROM transaction WHERE Magnitude > 3                                                                                                                                |
+|       14 | 0.03893900 | SELECT * FROM transaction WHERE Magnitude = 3                                                                                                                                |
+|       15 | 0.03572550 | SELECT * FROM transaction WHERE Data_value > 2000                                                                                                                            |
+|       16 | 0.00978150 | SELECT * FROM transaction WHERE Series_reference = "ECTA.S19A1"                                                                                                              |
+|       17 | 0.00982150 | SELECT * FROM transaction WHERE Series_reference = "ECTA.S19A9"                                                                                                              |
++----------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+Update Average: 0.071562125
+INSERT Average: 0.0841415
+SELECT Average: 0.0229989
+
+
+-- SUBTASK C
+
+create table new_table like transaction;
+
+insert new_table select * from transaction;
+
+create index indexId on new_table(Series_reference, Period);
+
+
+
+-- SUBTASK D
+
+
++----------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Query_ID | Duration   | Query                                                                                                                                                                        |
++----------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|        1 | 0.08860450 | UPDATE transaction SET Suppressed = "YES" WHERE Series_reference = "ECTA.S1GA2"                                                                                              |
+|        2 | 0.01186500 | UPDATE transaction SET Suppressed = "YES" WHERE Series_reference = "ECTA.S1GAX"                                                                                              |
+|        3 | 0.07893125 | UPDATE transaction SET Series_title_5 = "ABCD" WHERE Magnitude>3                                                                                                             |
+|        4 | 0.06649075 | UPDATE transaction SET Series_title_5 = "ABCD" WHERE  Data_value > 2000                                                                                                      |
+|        5 | 0.04980750 | UPDATE transaction SET Suppressed = "No" WHERE Series_reference = "ECTA.S1GA9"                                                                                               |
+|        6 | 0.01240075 | UPDATE transaction SET Series_title_5 = "AB1CD" WHERE Magnitude=3                                                                                                            |
+|        7 | 0.03701175 | INSERT into transaction values('ECTA.S1GA10', 2019.05, 23454, "", "C", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" ) |
+|        8 | 0.04133000 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "C", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|        9 | 0.04147100 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "C", "Dollars", 10, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       10 | 0.03314450 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "F", "Dollars", 10, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       11 | 0.03313800 | INSERT into transaction values('ECTA.S1GA9', 2019.05, 23454, "", "F", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       12 | 0.03316075 | INSERT into transaction values('ECTA.S1GA1', 2019.05, 23454, "", "F", "Dollars", 11, "Electronic Card Transactions", "Total values - Electronic card", "", "", "", "", "" )  |
+|       13 | 0.02162200 | SELECT * FROM transaction WHERE Magnitude > 3                                                                                                                                |
+|       14 | 0.01020350 | SELECT * FROM transaction WHERE Magnitude = 3                                                                                                                                |
+|       15 | 0.01637675 | SELECT * FROM transaction WHERE Data_value > 2000                                                                                                                            |
+|       16 | 0.01068025 | SELECT * FROM transaction WHERE Series_reference = "ECTA.S19A1"                                                                                                              |
+|       17 | 0.00980950 | SELECT * FROM transaction WHERE Series_reference = "ECTA.S19A9"                                                                                                              |
++----------+------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+
+Update Average: 0.0513499583
+INSERT Average: 0.0365426667
+SELECT Average: 0.0137384
+
+
+
+
+Time taken in SUBTASK B < Time taken in SUBTASK D. 
+Index Type: B-Tree has been used which has significantly improved the searching process. so time taken is decreased.

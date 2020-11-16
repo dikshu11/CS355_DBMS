@@ -1,0 +1,243 @@
+
+create table branch(
+branch_name varchar(20) primary key,
+branch_city varchar(20),
+assets float(10,2)
+);
+
+create table loan(
+loan_no int(10) primary key,
+branch_name varchar(20),
+amount float(10,2),
+constraint loan_fk foreign key (branch_name) references  branch(branch_name)
+);
+
+create table account(
+account_no int(10) primary key,
+branch_name varchar(20),
+balance float(10,2),
+constraint account_fk foreign key (branch_name) references branch(branch_name)
+);
+
+create table depositor(
+customer_name varchar(20),
+account_no int(10),
+constraint depositor_fk1 foreign key (account_no) references account(account_no),
+constraint depositor_fk2 foreign key (customer_name) references customer(customer_name)
+);
+
+create table customer(
+ customer_name varchar(20) primary key,
+ customer_street varchar(20),
+ customer_city varchar(20)
+
+);
+
+create table borrower(
+customer_name varchar(20),
+loan_no int(10),
+constraint borrower_fk1 foreign key (customer_name) references customer(customer_name),
+constraint borrower_fk2 foreign key (loan_no) references loan(loan_no)
+);
+
+insert into branch  	values ('cab' ,'Punjab', '10000.25' );
+insert into branch  	values ('a' ,'Punjab', '10000.25' );
+insert into branch	   values ('Bank of Baroda' ,'Punjab', '10000.25' );
+insert into branch	   values ('Bank of Punjab' ,'Baroda', '10567500.25' );
+insert into branch	   values ('Bank of Bihar' ,'Bihar', '1056000.25' );
+insert into branch	   values ('Bank of Bengal', 'Kolkata', '5641000.25' );
+insert into branch  	values  ('ICICI' ,'Punjab', '8710000.25' );
+insert into branch  	values  ('IDBI' ,'Punjab', '810000.25' );
+insert into branch  	values  ('HDFC' ,'Punjab', '1307000.25' );
+insert into branch  	values  ('SBI' ,'Kolkata', '1007500.25' );
+insert into branch  	values  ('Indusind','Kolkata', '1007540.25' );
+insert into branch  	values ('Benghar' ,'Punjab', '10000.25' );
+
+insert into loan  values ('10001','ICICI','69.56');
+insert into loan  values ('10002','ICICI','96.9');
+insert into loan  values ('10003','ICICI','79.0');
+insert into loan  values ('10004','ICICI','69.75');
+insert into loan  values ('10005','ICICI','8988.47');
+insert into loan  values ('10006','ICICI','5912234.0');
+insert into loan  values ('10007','ICICI','59000.5');
+insert into loan  values ('10008','ICICI','4898.6');
+insert into loan  values ('10009','ICICI','59595.5');
+insert into loan  values ('10010','ICICI','96000');
+
+
+insert into account  values ('170149','ICICI','96000');
+insert into account  values ('170148','ICICI','96000');
+insert into account  values ('170145','ICICI','96000');
+insert into account  values ('170150','ICICI','96000');
+insert into account  values ('170108','ICICI','96000');
+insert into account  values ('170110','ICICI','96000');
+insert into account  values ('170106','ICICI','96000');
+insert into account  values ('170136','ICICI','96000');
+insert into account  values ('170138','ICICI','96000');
+insert into account  values ('170146','ICICI','96000');
+
+insert into depositor   values ('Snigdh','170149');
+insert into depositor   values ('Shubhankar','170148');
+insert into depositor   values ('Sheetal','170145');
+insert into depositor   values ('Sunny','170150');
+insert into depositor   values ('Anubhav','170108');
+insert into depositor   values ('Arshbro','170110');
+insert into depositor   values ('Ankit','170106');
+insert into depositor   values ('rg99','170136');
+insert into depositor   values ('Rahul','170138');
+insert into depositor   values ('Shivansh','170146');
+insert into depositor   values ('Shivans','170146');
+
+
+
+insert into customer  values ('Snigdh','BH', 'Kolkata');
+insert into customer  values ('Shubhankar','BH','Kolkata');
+insert into customer  values ('Sheetal','BH','GorakhpurYork');
+insert into customer  values ('Sunny','BH','Banaras');
+insert into customer  values ('Anubhav','BHBH','Hisar');
+insert into customer  values ('Arshbro','BH','Chandigardh');
+insert into customer  values ('Ankit','BH','Uttarakhand');
+insert into customer  values ('rg99','BH','Punjab');
+insert into customer  values ('Rahul','BH','Daltonganj');
+insert into customer  values ('Shivansh','BH','UP');
+insert into customer  values ('Shivans','BH','UP');
+
+insert into borrower  values ('Snigdh','10001');
+insert into borrower  values ('Shubhankar','10002');
+insert into borrower  values ('Sheetal','10003');
+insert into borrower  values ('Sunny','10004');
+insert into borrower  values ('Anubhav','10005');
+insert into borrower  values ('Arshbro','10006');
+insert into borrower  values ('Ankit','10007');
+insert into borrower  values ('rg99','10008');
+insert into borrower  values ('Rahul','10009');
+insert into borrower  values ('Shivansh','10010');
+
+
+
+# TASK 2:
+
+1. 
+
+SELECT loan_no FROM loan 
+WHERE amount > 2000;
+
+
+2.
+
+SELECT account_no FROM account
+WHERE balance = (SELECT MAX(balance) FROM account);
+
+3. 
+
+SELECT b.customer_name, l.amount
+FROM borrower b
+JOIN loan l
+ON l.loan_no = b.loan_no
+WHERE branch_name = "Digha";
+
+4.
+
+SELECT branch_name FROM branch
+WHERE branch_name  REGEXP "^[^a]a[^a]$";
+
+
+5.
+
+
+SELECT d.customer_name
+FROM depositor d
+JOIN account a
+ON d.account_no = a.account_no
+WHERE a.branch_name = "Frazer Road"
+UNION
+SELECT b.customer_name
+FROM borrower b
+JOIN loan l
+ON b.loan_no = l.loan_no
+WHERE l.branch_name = "Frazer Road";
+
+
+6.
+
+SELECT d.customer_name
+FROM depositor d
+WHERE d.customer_name NOT IN(
+  SELECT b.customer_name  FROM borrower b);
+
+
+7.
+
+
+SELECT c.customer_name
+FROM customer c
+WHERE c.customer_name NOT IN( SELECT b.customer_name  FROM borrower b) AND c.customer_name NOT IN( SELECT d.customer_name  FROM depositor d);
+
+
+8.
+
+SELECT b.customer_name 
+FROM borrower b
+WHERE b.loan_no IN(
+   SELECT l.loan_no 
+   FROM loan l
+   JOIN branch b
+   ON l.branch_name = b.branch_name
+   WHERE branch_city = 'Dhanbad'
+);
+
+
+SELECT b.customer_name  
+FROM borrower b
+WHERE EXISTS(
+   SELECT *
+   FROM loan l
+   JOIN branch b
+   ON l.branch_name = b.branch_name
+   WHERE branch_city = 'Dhanbad' and b.loan_no = l.loan_no
+);
+
+
+9.
+
+SELECT b.branch_name, COUNT(a.account_number)
+FROM branch b
+JOIN account a
+ON b.branch_name = a.branch_name
+WHERE b.branch_city = 'PUNJAB'
+GROUP BY b.branch_name;
+
+
+10.
+
+SELECT  SUM(a.balance)
+FROM account a
+GROUP BY a.branch_name;
+
+11.
+
+SELECT * 
+FROM customer c
+WHERE c.customer_name IN(
+  SELECT customer_name
+  FROM depositor
+  GROUP BY customer_name
+  HAVING COUNT(*) > 1
+);
+
+12.
+
+SELECT c.customer_name
+FROM customer c
+WHERE c.customer_name IN(
+    SELECT customer_name FROM(
+    	SELECT customer_name, COUNT(DISTINCT branch_name) as cnt
+    	FROM depositor d
+    	JOIN account a
+    	ON d.account_no = a.account_no
+    	GROUP by customer_name
+    	HAVING cnt > 1 
+    ) as t1
+);
+
+

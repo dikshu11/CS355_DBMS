@@ -1,0 +1,154 @@
+CREATE TABLE actors(
+    AID varchar(20),
+    name varchar(20),
+    sex char(1),
+    dob Date,
+    primary key(AID)
+);
+
+
+CREATE TABLE movies(
+    MID varchar(5),
+    Title varchar(30),
+    Genre varchar(15),
+    duration float(10,2),
+    ReleaseDate date,
+    primary key(MID)
+);
+
+
+CREATE TABLE actorMovie(
+    MID varchar(5),
+    AID varchar(5),
+    Rolename varchar(15),
+    foreign key(MID) references movies(MID),
+    foreign key(AID) references actors(AID)
+);
+
+
+INSERT into movies values(1, 'URI', 'Action', 138, "2019-01-01" );
+INSERT into movies values(2, 'Gully Boy', 'Comedy', 120, "2019-02-11");
+INSERT into movies values(3, "Badla", "Crime", 118, "2018-12-19");
+INSERT into movies values(4, "Deewar", "Drama", 122, "1990-12-19");
+INSERT into movies values(5, "Black", "Drama", 122, "2005-10-10");
+
+INSERT into actors values(1, "Amitabh Bacchan", "M", "1971-01-01");
+INSERT into actors values(2, "Tapsee Pannu", "F", "1992-10-10");
+INSERT into actors values(3, "Vicky Kaushal", "M", "1995-05-05");
+INSERT into actors values(4, "Ranveer Singh", "M", "1985-03-04");
+
+INSERT into actorMovie values(1, 3, "Star" );
+INSERT into actorMovie values(2, 3, "Star" );
+INSERT into actorMovie values(2, 4, "Actor");
+INSERT into actorMovie values(3, 1, "Star");
+INSERT into actorMovie values(4, 1, "Star");
+INSERT into actorMovie values(5, 1, "Double Role");
+INSERT into actorMovie values(5, 1, "Star");
+
+
+
+-- TASK 2
+
+1.
+
+SELECT DISTINCT actors.name, actors.AID, movies.Title
+FROM actors
+LEFT JOIN actorMovie
+ON actorMovie.AID = actors.AID
+LEFT JOIN movies
+ON movies.MID = actorMovie.MID; 
+
+
+2.
+
+delimiter $$
+
+CREATE PROCEDURE  procActorMov(in actorID varchar(20))
+BEGIN
+
+   SELECT movies.GENRE, COUNT(*)
+   FROM actors, movies, actorMovie
+   WHERE actors.AID=actorMovie.AID
+   AND actorMovie.MID = movies.MID
+   AND actors.AID= actorID
+   GROUP BY movies.GENRE;
+
+END$$
+delimiter ;
+
+
+3.
+
+delimiter $$
+
+CREATE FUNCTION funActorDoubleRole( actorID varchar(20))
+RETURNS varchar(5)
+DETERMINISTIC
+BEGIN
+   
+   DECLARE ans varchar(5);
+   DECLARE cnt int;
+
+   SELECT COUNT(*) into cnt
+   FROM actors, actorMovie as a1, actorMovie as a2
+   WHERE actors.AID = a1.AID 
+   AND actors.AID = a2.AID
+   AND a1.MID = a2.MID
+   AND a1.Rolename != a2.Rolename
+   AND actors.AID = actorID ;
+   
+
+   if (cnt>0) THEN
+     SET ans = "TRUE";
+   else
+     SET ans = "FALSE";
+   end if;
+
+   RETURN ans;
+
+END$$
+delimiter ;
+
+
+4.
+
+
+
+CREATE TABLE actorMovieBck(
+    MID varchar(5),
+    AID varchar(5),
+    Rolename varchar(15),
+    dateDeleted date,
+    foreign key(MID) references movies(MID),
+    foreign key(AID) references actors(AID)
+);
+
+
+delimiter $$
+
+
+CREATE TRIGGER  before_actorMovie_delete
+AFTER DELETE
+ON actorMovie FOR EACH ROW
+
+BEGIN
+  INSERT into actorMovieBck values(OLD.MID, OLD.AID, OLD.Rolename, curdate() );
+END$$
+
+delimiter ;
+
+
+
+5.
+
+delimiter $$
+
+CREATE PROCEDURE procAutoDelete()
+BEGIN
+  DELETE FROM actorMovieBck
+  WHERE CURDATE()-dateDeleted > 7;
+
+END$$
+delimiter ;
+
+

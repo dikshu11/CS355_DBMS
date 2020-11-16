@@ -1,0 +1,167 @@
+TASK 1.
+
+1. 
+
+-- Adding a column 
+
+ALTER TABLE suppliers ADD COLUMN status varchar(20);
+
+-- Creating a procedure
+
+delimiter $$
+ CREATE PROCEDURE procSupStatus(in snum varchar(10), out stat varchar(20) )
+    begin 
+    declare age int;
+    SELECT DATEDIFF( CURDATE(), dob)/365 INTO age FROM suppliers WHERE sno = snum;
+    if (age>60) then
+    SET stat = 'Senior';
+ 	else
+ 	SET stat = 'Non Senior';
+ 	end if;
+    end$$
+
+
+delimiter ;
+
+-- Updating status
+
+SET @snum_in = "s123";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s12321";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s124";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s125";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s126";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s8090";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s8799";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+SET @snum_in = "s8811";
+call procSupStatus(@snum_in, @stat_out);
+UPDATE suppliers SET status = @stat_out WHERE sno = @snum_in;
+
+
+
+
+
+2.
+
+
+delimiter $$
+ CREATE PROCEDURE procPartsInsert( in pno1 varchar(10), in name varchar(10), in weight1 float(6,2), in  color1 varchar(10) , in  howManyDays int)
+    begin 
+    if ( pno1 NOT IN (SELECT pno FROM parts) ) THEN
+    INSERT INTO parts VALUES(pno1, name, weight1, color1, DATE_SUB(CURDATE(), INTERVAL howManyDays DAY )  );
+    end if;
+    end$$
+
+
+delimiter ;
+
+
+
+
+
+3. 
+
+
+delimiter $$
+ CREATE PROCEDURE procSPDateSummary( in dt DATE)
+    begin 
+    SELECT DISTINCT * FROM suppliers
+    WHERE sno IN(
+       SELECT sno from sp 
+       WHERE  ABS(DATEDIFF( dt , dos ) ) <= 30  
+    );
+    end$$
+
+
+delimiter ;
+
+
+
+
+4. 
+
+delimiter $$
+ CREATE FUNCTION funDateKey( dt DATE)
+ RETURNS varchar(10)
+ DETERMINISTIC
+ BEGIN 
+    declare ans varchar(10);
+    declare ans1 varchar(8);
+    declare month varchar(4);
+    declare year varchar(8);
+    declare day varchar(4);
+
+    SET month = CONCAT('00', EXTRACT(month from dt));
+    SET year = CONCAT('0000', EXTRACT(year from dt));
+  	SET day = CONCAT('00', EXTRACT(day from dt));
+  	SET ans1 = CONCAT_WS( RIGHT(month, 2),  RIGHT( year, 4)  , RIGHT( day, 2) );
+    SET ans = CONCAT(ans1, ROUND( rand()*98 ) );
+
+    RETURN (ans);
+ END$$
+
+
+delimiter ;
+
+
+
+
+
+5. 
+
+
+-- Creating a table:
+
+CREATE TABLE newKey(
+  	supkey varchar(10),
+  	doc DATE,
+  	PRIMARY KEY(supkey)
+);
+
+
+delimiter $$
+create procedure procSupKey(in sno1 varchar(10))
+	begin
+	declare sup varchar(10);
+	declare x int;
+	declare tmp date;
+	set x = 0;
+	loop_label: LOOP
+	select dob from suppliers where sno = sno1 into tmp;
+	select funDateKey(tmp) into sup;
+	if x>4 then
+	leave loop_label;
+	end if;
+	set x = x + 1;
+	if (sup in (select supkey from newKey)) then
+	iterate loop_label;
+	else
+	insert into newKey values (sup, curdate());
+	leave loop_label;
+	end if;
+	end LOOP;
+	end$$
+
+delimiter ;
+
+

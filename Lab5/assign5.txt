@@ -1,0 +1,223 @@
+CREATE TABLE banks(
+  	name varchar(20),
+  	city varchar(20),
+  	numberOfAccounts int(20),
+  	security varchar(20),
+  	PRIMARY KEY(name, city)
+);
+
+LOAD DATA LOCAL INFILE 'banks.txt' INTO TABLE banks FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n';
+
+CREATE TABLE robbers(
+	id int(10) NOT NULL AUTO_INCREMENT,
+  	name varchar(20),
+  	age int(10),
+  	yearsInJail int(10),
+  	PRIMARY KEY(id)
+);
+
+LOAD DATA LOCAL INFILE 'robbers.txt' INTO TABLE robbers FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n' (name, age, yearsInJail) ;
+
+
+CREATE TABLE  hasaccounts(
+	id int(10),
+	name varchar(20),
+	city varchar(20),
+
+	FOREIGN KEY(id) REFERENCES robbers(id),
+	FOREIGN KEY(name, city) REFERENCES banks(name, city)
+	
+);
+
+LOAD DATA LOCAL INFILE 'hasaccounts.txt' INTO TABLE hasaccounts FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n' (@dummy1, name, city)  
+SET id = (  SELECT id FROM robbers WHERE name =  @dummy1 ); 
+
+
+CREATE TABLE robberies(
+	name varchar(20),
+	city varchar(20),
+	date DATE,
+	amount float(10, 5),
+	FOREIGN KEY(name, city) REFERENCES banks(name, city)
+);
+
+LOAD DATA LOCAL INFILE 'robberies.txt' INTO TABLE robberies FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n';
+
+
+CREATE TABLE accomplices(
+	id int(10),
+	name varchar(20),
+	city varchar(20),
+	date DATE,
+	amount float(10, 5),
+	FOREIGN KEY(id) REFERENCES robbers(id),
+	FOREIGN KEY(name, city) REFERENCES banks(name, city)
+);
+
+LOAD DATA LOCAL INFILE 'accomplices.txt' INTO TABLE accomplices FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n' (@dummy1, name, city, date, amount)  
+SET id = (  SELECT id FROM robbers WHERE name =  @dummy1 ); 
+
+
+CREATE TABLE plans(
+	name varchar(20),
+	city varchar(20),
+	date DATE,
+	num int(10),
+	FOREIGN KEY(name, city) REFERENCES banks(name, city)
+);
+
+LOAD DATA LOCAL INFILE 'plans.txt' INTO TABLE plans FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n';
+
+
+CREATE TABLE skills(
+	skillID int(10) NOT NULL AUTO_INCREMENT,
+	skillName varchar(20),
+	PRIMARY KEY(skillID),
+	constraint c1 unique(skillName)
+);
+
+
+LOAD DATA INFILE 'hasskils.txt' INTO TABLE skills FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n' (@dummy1, @dummy2, @dummy3, @dummy4)  
+SET skillName =  @dummy2; 
+
+
+CREATE TABLE hasskills(
+	id int(10),
+	skillid int(10),
+	prefernce int(10),
+	grade varchar(20),
+
+	PRIMARY KEY(id, skillid)
+	FOREIGN KEY(skillid) REFERENCES skills(skillID)
+	FOREIGN KEY(id) REFERENCES robbers(id)
+);
+
+LOAD DATA INFILE 'hasskils.txt' INTO TABLE hasskills FIELDS TERMINATED BY '\t'  LINES TERMINATED BY '\n' (@dummy1, skill, prefernce, grade)  
+SET id = (  SELECT id FROM robbers WHERE name =  @dummy1 ),
+skillid = (SELECT skillID FROM skills  WHERE skillName = @dummy2 ); 
+
+
+
+### TASK 2:
+
+
+1.  
+
+CREATE VIEW v1 AS
+SELECT * FROM robbers
+WHERE yearsInJail > 2 ;
+
+SELECT * FROM v1;
+
+2.
+
+CREATE VIEW v2 AS
+SELECT * FROM robbers
+WHERE id IN(
+	SELECT id FROM accomplices 
+	WHERE EXTRACT( year FROM date) >= 2005 and EXTRACT( year FROM date) <=2010
+);
+
+SELECT * FROM v2; 
+
+3.
+
+CREATE VIEW flag AS
+(
+	SELECT t1.id, MAX(t2.age) AS maxage
+	FROM hasskills AS t1, robbers as t2
+	WHERE t1.id=t2.id
+	GROUP BY t1.skillid
+);
+
+CREATE VIEW view3 AS
+(
+	SELECT flag.skillid, robbers.name
+	FROM flag, robbers, hasskills
+	WHERE robbers.age = flag.maxage
+	AND hasskills.sid = flag.sid
+	AND hasskills.rid = robbers.rid
+);
+
+
+
+SELECT * FROM v3;
+
+
+
+4.
+
+
+CREATE VIEW v4 AS
+
+SELECT banks.name, banks.city
+FROM banks, robberies
+WHERE banks.name = robberies.name AND banks.city = robberies.city
+GROUP BY banks.name, banks.city
+HAVING COUNT(robberies.amount)>1;
+
+
+SELECT * FROM v4;
+
+
+5. 
+
+CREATE VIEW v5 AS
+SELECT * FROM robberies
+WHERE city = "Chicago"
+ORDER BY date DESC
+LIMIT 5;
+SELECT * FROM v5;
+
+6.
+
+CREATE VIEW v6 AS
+SELECT robbers.id, robbers.name, SUM(accomplices.amount) AS Total_Amount
+FROM robbers, accomplices
+WHERE accomplices.id = robbers.id
+GROUP BY robbers.id;
+
+SELECT * FROM v6;
+
+7.
+
+CREATE VIEW v7 AS
+SELECT robbers.id, robbers.name, COUNT(hasskills.skillid) AS Skills
+FROM robbers, hasskills
+WHERE robbers.id = hasskills.id
+GROUP BY robbers.id;
+
+SELECT * FROM v7;
+
+
+
+8.
+
+CREATE VIEW v8 AS
+SELECT  name, city FROM plans
+WHERE date <= ADDDATE( CURDATE(), INTERVAL 3 month);
+
+SELECT * FROM v8;
+
+
+
+9.
+
+CREATE VIEW v9 AS
+SELECT DISTINCT robbers.id, robbers.name
+FROM robbers, hasaccounts, plans
+WHERE robbers.id = hasaccounts.id
+AND hasaccounts.name = plans.name
+AND hasaccounts.city = plans.city
+AND plans.date <= adddate(CURDATE(), INTERVAL 3 MONTH);
+
+SELECT * FROM v9;
+
+
+
+10.
+
+CREATE view x1 as SELECT name, city, count(date) as cnt FROM robberies group by name,city;
+CREATE view v10 as (SELECT banks.name, banks.city, x1.cnt, banks.security FROM x1, banks WHERE x1.name = banks.name and x1.city = banks.city);
+
+SELECT * FROM v10;

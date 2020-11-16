@@ -1,0 +1,251 @@
+-- TASK 1
+
+CREATE table Malls(
+	ID smallint(1),
+	Mname varchar(10),
+	Earnings smallint(5),
+	primary key(ID)
+);
+
+CREATE table Houses(
+	HouseNo smallint(1),
+	MID smallint(1),
+
+	primary key(HouseNo),
+	foreign key(MID) references Malls(ID)
+);
+
+CREATE table Characters(
+	Name char(10),
+	Profession char(30),
+	HouseNo smallint(1),
+	Interests char(15),
+	primary key(Name),
+	foreign key(HouseNo) references Houses(HouseNo)
+);
+
+CREATE table TimeTable(
+	Name char(10),
+	ItemsBought char(10),
+	Quantity smallint(2),
+	ArrivalTime smallint(2),
+	DepartureTime smallint(2),
+	foreign key(Name) references Characters(Name)
+);
+
+
+INSERT into Malls values(1, 'Central', 0),
+                        (2, 'GVK', 0),
+                        (3, 'PnM', 0);
+
+
+INSERT into Houses values(1, 1),
+                         (2, 1),
+                         (3, 2),
+                         (4, 2),
+                         (5, 3);
+
+INSERT into Characters values("Monica", "Chef", 1, "Cooking"),
+                             ("Rachel", "Stylist", 1, "Fashion"),
+                             ("Joey", "Actor", 2, "Food"),
+                             ("Chandler", "Data Analyst", 2, "Sarcasm"),
+                             ("Ross", "Doctor", 3, "Dinosaurs"),
+                             ("Pheobe", "Massuese", 4, "Singing"),
+                             ("Denise", "Teacher", 3, "Food"),
+                             ("Carol", "Engineer", 5, "fashion"),
+                             ("Susan", "Housekeeper", 5, "fashion"),
+                             ("Mike", "Doctor", 4, "Reading"); 
+
+INSERT into TimeTable values("Rachel", "Sweater", 1, 3, 8);
+INSERT into TimeTable values("Rachel", "Sweater", 1, 6, 8);
+INSERT into TimeTable values("Susan", "Sweater", 2, 7, 8);
+INSERT into TimeTable values("Rachel", "Sandwich", 1, 6, 8);
+INSERT into TimeTable values("Joey", "Sandwich", 1, 6, 8);
+INSERT into TimeTable values("Joey", "Watch", 1, 6, 8);
+INSERT into TimeTable values("Joey", "Watch", 1, 7, 8);
+INSERT into TimeTable values("Joey", "Pizza", 1, 6, 8);
+INSERT into TimeTable values("Joey", "Sweater", 1, 6, 8);
+INSERT into TimeTable values("Joey", "Sandwich", 5, 6, 8);
+
+
+-- TASK 2
+
+1. 
+
+SELECT CONCAT(Name, " ", Interests) 
+FROM Characters
+WHERE  CHAR_LENGTH(Name) >=4;
+
+
+2.
+
+SELECT Characters.Name
+FROM Characters, TimeTable
+WHERE Characters.Name = TimeTable.Name
+AND Characters.Interests = "Fashion"
+AND TimeTable.ItemsBought = "Sweater"
+AND TimeTable.DepartureTime BETWEEN 7 and 10;
+
+
+3.
+
+SELECT Characters.Name, Characters.Interests, Houses.HouseNo
+FROM Characters, Houses, Malls
+WHERE Characters.HouseNo = Houses.HouseNo
+AND Houses.MID = Malls.ID
+AND Malls.Mname = "GVK";
+
+
+
+4.
+
+CREATE VIEW countHouses AS 
+SELECT COUNT(Name)
+FROM Characters
+GROUP BY HouseNo;
+
+
+
+5.
+
+delimiter $$
+
+CREATE FUNCTION shopping(characterName char(10))
+RETURNS Int
+DETERMINISTIC
+   BEGIN
+      DECLARE cnt INT DEFAULT 0;
+
+      SELECT SUM(Quantity) into cnt FROM TimeTable 
+      WHERE Name = characterName;
+
+      RETURN (cnt);
+   END$$
+
+delimiter ;
+
+
+
+6.
+
+delimiter $$
+
+CREATE PROCEDURE characters_profession(in profession1 char(30))
+DETERMINISTIC
+   BEGIN
+   
+   	if STRCMP(profession1, "Data Analyst") = 0 THEN
+   	  SELECT * FROM Characters WHERE Profession = "Data Analyst";
+   	elseif STRCMP(profession1, "Actor") = 0 THEN
+   	  SELECT * FROM Characters WHERE Profession = "Actor";
+   	end if;
+   END$$
+
+delimiter ;
+
+
+7.
+
+
+delimiter $$
+
+CREATE FUNCTION max_quantity_bought(characterName char(10))
+RETURNS varchar(50)
+DETERMINISTIC
+   BEGIN
+      Declare cnt int; 
+      DECLARE item varchar(50);
+
+      SELECT CONCAT(ItemsBought, " ",  cnt1) into item
+      FROM (SELECT ItemsBought, SUM(Quantity) as cnt1 FROM TimeTable WHERE Name = characterName GROUP BY ItemsBought ) as t1
+      WHERE cnt1 = ( SELECT  MAX(t2.cnt1) FROM (SELECT SUM(Quantity) as cnt1 FROM TimeTable WHERE Name = characterName GROUP BY ItemsBought ) as t2)
+      LIMIT 1;
+
+      RETURN (item);
+
+   END$$
+
+delimiter ;
+
+
+
+
+8.
+
+delimiter $$
+
+CREATE FUNCTION matching_shopping_cart(characterName1 char(10), characterName2 char(10))
+RETURNS varchar(10)
+DETERMINISTIC
+   BEGIN
+      DECLARE cnt1 INT DEFAULT 0;
+      DECLARE cnt2 INT DEFAULT 0;
+      DECLARE ans varchar(10);
+
+      SELECT SUM(Quantity) into cnt1 FROM TimeTable 
+      WHERE Name = characterName1;
+
+      SELECT SUM(Quantity) into cnt2 FROM TimeTable 
+      WHERE Name = characterName2;
+
+      if cnt1 = cnt2 THEN
+      	SET ans = "TRUE";
+      else 
+      	SET ans = "FALSE";
+      end if;
+      RETURN (ans);
+   END$$
+
+delimiter ;
+
+
+
+9.
+
+
+ALTER table Characters ADD Speed char(4);
+
+delimiter $$
+
+CREATE PROCEDURE track_character(characterName char(10))
+   BEGIN
+     DECLARE totalTime INT DEFAULT 0;
+
+     SELECT MAX(DepartureTime)- MIN(ArrivalTime) into totalTime FROM TimeTable
+     WHERE Name = characterName;
+
+     if totalTime <= 4 THEN
+      UPDATE Characters SET Speed = "Fast" WHERE Name = characterName;
+     else
+      UPDATE Characters SET Speed = "Slow" WHERE Name = characterName;
+     end if;
+   END$$
+delimiter ;
+
+call track_character("Rachel");
+
+
+
+10.
+
+delimiter $$
+
+CREATE TRIGGER mall_earnings
+BEFORE INSERT
+ON TimeTable FOR EACH ROW
+
+  BEGIN
+    DECLARE mid smallint(1);
+
+    SELECT Houses.MID into mid
+    FROM Houses, Characters
+    WHERE Characters.HouseNo = Houses.HouseNo
+    AND Characters.Name = new.name;
+
+    UPDATE Malls SET Earnings = Earnings + new.Quantity*10 WHERE ID = mid;
+
+  END$$
+
+delimiter ;
+
+

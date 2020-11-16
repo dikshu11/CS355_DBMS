@@ -1,0 +1,127 @@
+Task 1:
+
+a.  add dob (date of birth) attribute in suppliers relation
+
+ALTER TABLE suppliers ADD dob DATE;
+
+b. add dom (date of manufacture) attribute in part relation.
+
+ALTER TABLE parts ADD dom DATE;
+
+c. add dos (date of supply) attribute in sp relation.
+
+ALTER TABLE sp ADD dos DATE;
+
+d. update these three new columns with some relevant values.
+
+UPDATE suppliers SET dob = '2000-01-01' WHERE sno = 's123';
+UPDATE suppliers SET dob = '2000-01-02' WHERE sno = 's124';
+UPDATE suppliers SET dob = '2000-01-03' WHERE sno = 's125';
+UPDATE suppliers SET dob = '2000-01-04' WHERE sno = 's126';
+UPDATE suppliers SET dob = '2000-01-05' WHERE sno = 's12321';
+UPDATE suppliers SET city = 'Patna' WHERE sno = 's124';
+
+UPDATE parts SET dom = '2000-01-01' WHERE pno = 'p123';
+UPDATE parts SET dom = '2000-01-02' WHERE pno = 'p124';
+UPDATE parts SET dom = '2000-01-03' WHERE pno = 'p125';
+UPDATE parts SET dom = '2000-01-04' WHERE pno = 'p126';
+UPDATE parts SET weight = 10 WHERE pno = 'p126';
+
+UPDATE sp SET dos = '2000-01-01' WHERE pno = 'p123';
+UPDATE sp SET dos = '2000-01-02' WHERE pno = 'p124';
+UPDATE sp SET dos = '2000-01-03' WHERE pno = 'p125';
+UPDATE sp SET dos = '2018-01-04' WHERE pno = 'p126';
+
+
+e. Now create the sup data.txt in the local folder with the following details. Here, the columns indicate sno , sname , city , phone , email and dob respectively. If the following sno.s already exist in the table then you may use different sno.s which are not present in the table. Load the data from sup _data.txt into the suppliers table using infile option
+
+LOAD DATA LOCAL INFILE 'sup.data.txt' INTO TABLE suppliers FIELDS TERMINATED BY ','  LINES TERMINATED BY '\n';
+
+
+f.  After the loading is done successfully, save the data from suppliers table (you can use SELECT * from suppliers
+) into a file sup_op.txt using the outfile option.
+
+SELECT * INTO OUTFILE '/var/lib/mysql-files/sup_op.txt' FIELDS TERMINATED BY ','  LINES TERMINATED BY '\n';
+ 
+
+
+
+
+ TASK 2:
+
+ 1.  Find the name of the oldest supplier.
+
+SELECT sname from suppliers
+WHERE DATEDIFF(  CURDATE(), dob ) = ( SELECT MAX(DATEDIFF( CURDATE(), dob )) from suppliers) ; 
+
+2.  Find the details of the suppliers who are less than 30 years old.
+
+SELECT * from suppliers
+WHERE DATEDIFF(  CURDATE(), ADDDATE(dob, INTERVAL 30 YEAR)  ) < 0
+
+
+3.  Show the average age of the suppliers from each city.
+
+SELECT AVG( DATEDIFF( CURDATE(), dob)/365 ) from suppliers
+GROUP BY city;
+
+
+4.  Find the name of the suppliers who have supplied parts in the year 2018.
+
+SELECT sname from suppliers
+WHERE sno IN (SELECT sno from sp WHERE EXTRACT(year from dos ) = 2018 );
+
+
+5.   Find the name of the suppliers who have supplied parts after 2017-08-1
+
+SELECT sname from suppliers
+WHERE sno IN (SELECT sno from sp WHERE DATEDIFF(dos, '2017-08-14' ) > 0 );
+
+
+6.  Find the name of the most recently supplied parts.
+
+SELECT pname from parts
+WHERE pno IN( 
+    SELECT pno from sp
+    WHERE DATEDIFF(  CURDATE(), dos ) = ( SELECT MIN(DATEDIFF( CURDATE(), dos )) from sp ) 
+);
+
+7. Find the name of the suppliers who have supplied atleast two parts and one part is supplied within 30 days of supply of previous part.
+
+
+
+SELECT sname from suppliers 
+WHERE sno in (SELECT sno from (SELECT sno, COUNT(qty) as quantity, MAX(dos) as maxD, MIN(dos) as minD from sp group by sno) as table1 
+WHERE quantity > 1 and DATEDIFF(maxD, minD)/(quantity-1) < 30);
+
+
+8.   If the warranty period is 6 months from the date of supply then show the warranty expiry date of each items supplied
+
+SELECT DATE_ADD(dos, INTERVAL 6 MONTH) as expiryDate from sp;
+
+
+9.   Show the name of the suppliers who have supplied more than 2 years old items.
+
+SELECT distinct suppliers.sname 
+from suppliers, sp, parts
+WHERE suppliers.sno = sp.sno and parts.pno = sp.pno and DATEDIFF(sp.dos, parts.dom) > 730;
+
+
+
+10.  Display a chart that will show the pno and its weight with asterisks (*). For example: if the weight is any value in { 0,1,2,,9 } then use '*', if the weight is any value in { 10,11,12,,19 } use '**', if the weight is any value in {20,21,22,,29 } use '***' and so on.
+
+
+SELECT pno, REPEAT('*', (weight DIV 10) +1) from parts;
+
+
+
+
+Submisison:
+
+
+
+# Creating backup, encrypting and decrypting:
+
+mysqldump -u scot -p SP > assign4Backup.sql
+openssl aes-256-cbc -a -salt -in assign4Backup.sql -out assign4.txt
+openssl aes-256-cbc -d -a -in assign4.txt -out assign4NewBackup.sq

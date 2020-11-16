@@ -1,0 +1,208 @@
+TASK 1:
+
+CREATE TABLE account(
+  AccountNo varchar(5),
+  Password varchar(20),
+  Type varchar(15),
+  Balance int,
+  PRIMARY KEY (AccountNo)
+);
+
+INSERT INTO account VALUES ('A101', 'alice', 'Checking', 10000), ('A102', 'bob', 'Checking', 1200), ('A103', 'carol', 'Saving', 1239); 
+
+
+account.html file:
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Account Fetch</title>
+</head>
+<body>
+  <div style="margin: 20px;">
+    <form action="accountData.php" method="post">
+      Account No:
+      <input type="text" name="acc_no">
+      <br><br>
+      Password:
+      <input type="password" name="password">
+      <br><br>
+      <input type="submit" value="Submit" name="selection">
+    </form>
+  </div>
+</body>
+</html>
+
+accountData.php file (THIS PHP FILE IS FOR ALL THE HTML FILES IN FOLLOWING TASKS):
+
+<?php
+
+  $dbhost="localhost";
+  $dbuser="root";
+  $dbpass="mysql";
+  $dbname="bank";
+
+  $conn=new mysqli($dbhost,$dbuser,$dbpass,$dbname);
+  if(!$conn){
+    die("Connection Failed: " . $conn->connect_error . "\n");
+  }
+
+  if(isset($_POST["selection"])){
+    $account_no = $_POST["acc_no"];
+    $password = $_POST["password"];
+    $sql="SELECT * FROM account WHERE AccountNo='$account_no' AND Password='$password'";
+    $result=mysqli_query($conn,$sql);
+    $rowcount=mysqli_num_rows($result);
+    if($rowcount > 0){
+      $row=mysqli_fetch_assoc($result);
+      echo "Account No ". $row["AccountNo"] . "<br>";
+      echo "Type " . $row["Type"] . "<br>";
+      echo "Balance ". $row["Balance"] . "<br>"; 
+    }else{
+      echo "Account Does not exist";
+    }
+  }
+  if(isset($_POST["update"])){
+    $account_no = $_POST["acc_no"];
+    $old_password = $_POST["oldPassword"];
+    $new_password = $_POST["newPassword"];
+    $sql="SELECT * FROM account WHERE AccountNo='$account_no' AND Password='$old_password'";
+    $result=mysqli_query($conn,$sql);
+    $rowcount=mysqli_num_rows($result);
+    if($rowcount > 0){
+      $sql1="UPDATE account SET Password='$new_password' WHERE AccountNo='$account_no'";
+      $res=mysqli_query($conn,$sql1);
+      if($res){
+        echo "password update done";
+      }else{
+        echo "Updation Failed";
+      }
+    }else{
+      echo "Account Does not exist";
+    }
+  }
+  if(isset($_POST["insertion"])){
+    $account_no = $_POST["acc_no"];
+    $password = $_POST["password"];
+    $type = $_POST["acc_type"];
+    $balance = $_POST["acc_bal"];
+    $sql="INSERT INTO account VALUES('$account_no','$password','$type',$balance)";
+    $result=mysqli_query($conn,$sql);
+    if($result){
+      echo "insertion is successfully done";
+    }else{
+      echo "Insertion Failed";
+    }
+  }
+  if(isset($_POST["deletion"])){
+    $account_no = $_POST["acc_no"];
+    $password = $_POST["password"];
+    $sql="SELECT * FROM account WHERE AccountNo='$account_no' AND Password='$password'";
+    $result=mysqli_query($conn,$sql);
+    $rowcount=mysqli_num_rows($result);
+    if($rowcount > 0){
+      $sql1="DELETE FROM account WHERE AccountNo='$account_no'";
+      $res=mysqli_query($conn,$sql1);
+      if($res){
+        echo "deletion successful";
+      }else{
+        echo "Deletion Failed";
+      }
+    }else{
+      echo "Account Does not exist";
+    }
+  }
+?>
+
+
+TASK 2:
+
+1. Yes
+2. Yes, If we put account number = A101';# and leave password field empty.
+3. Yes, If we put account number = ' OR 1=1;# and leave password field empty.
+
+This vulnerability in answers 2,3 can be solved if we use real_escape_string.
+Example:
+Do $account_no = $mysqli->real_escape_string($_POST["acc_no"];
+In place of $account_no = $_POST["acc_no"];
+
+
+TASK 3:
+
+acountPW.html file:
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Account Update Pass</title>
+</head>
+<body>
+  <div style="margin: 20px;">
+    <form action="accountData.php" method="post">
+      Account No: <input type="text" name="acc_no">
+      <br><br>
+      Old Password: <input type="password" name="oldPassword">
+      <br><br>
+      New Password: <input type="password" name="newPassword">
+      <br><br>
+      <input type="submit" value="Submit" name="update">
+    </form>
+  </div>
+</body>
+</html>
+
+
+
+TASK 4:
+
+accountInsert.html file:
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Account Insert</title>
+</head>
+<body>
+  <div style="margin: 20px;">
+    <form action="accountData.php" method="post">
+      Account No: <input type="text" name="acc_no">
+      <br><br>
+      Password: <input type="password" name="password">
+      <br><br>
+      Type: <input type="text" name="acc_type">
+      <br><br>
+      Balance: <input type="number" name="acc_bal">
+      <br><br>
+      <input type="submit" value="Submit" name="insertion">
+    </form>
+  </div>
+</body>
+</html>
+
+
+
+TASK 5:
+
+accountDelete.html file:
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Account Deletion</title>
+</head>
+<body>
+  <div style="margin: 20px;">
+    <form action="accountData.php" method="post">
+      Account No: <input type="text" name="acc_no">
+      <br><br>
+      Password: <input type="password" name="password">
+      <br><br>
+      <input type="submit" value="Submit" name="deletion">
+    </form>
+  </div>
+</body>
+</html>
+
+Note: The interesting and surprising observation is described in task 2.
+Also, the steps for every task was simply to create the html page, send post request to the php file, fetch variables from $_POST superglobal, do the query and display result.
+

@@ -1,0 +1,43 @@
+
+#1. 
+select substr(sno,2,10) as SnoNumbers from suppliers;
+
+#2. 
+select concat("sp",substr(sno,2,10),substr(pno,2,10)) as spValues from sp;
+
+#3.
+select sno from suppliers where substr(sno,2,10) = reverse(substr(sno,2,10));
+
+#4. 
+select concat("suppl", substr(sno,2,10)) as Suppl from suppliers;
+
+#5.
+select concat(substr(phone,1,5),"-", substr(phone,6,10)) as Phone from suppliers;
+
+#6.
+select concat(substr(sname,1,2), right(sno,1), substr(phone,5,1), substr(phone,8,1), substr(city,1,1)) as XFormat from suppliers;
+
+#7.
+select sno, substr(email, instr(email,'@') + 1, instr(substr(email, instr(email,'@')+1,10),'.') - 1) as domain from suppliers;
+
+#8.
+select sno, sname from suppliers where sno =(
+	select sno from sp where pno = (
+		select pno from parts where color = 'red'
+		)
+	);
+
+#9. 
+create view view1 as select sno, sname from suppliers where sno in (select sno from(select sno, count(qty) as counting from sp group by sno) as tb1  where counting>1);
+
+#10. 
+create view view2 as select * from (select pno, count(qty) as counting from sp group by pno) as tb2 order by counting DESC;
+
+# SQL Dump 
+mysqldump –u rahul -p SP> assign2Backup.sql
+
+# Encrypt File
+openssl enc -aes-256-cbc -salt -in assign2Backup.sql -out abcd.txt -k rahul
+ 
+# Decrypt File 
+openssl aes-256-cbc -d -in abcd.txt -out decrypted.sql

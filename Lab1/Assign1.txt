@@ -1,0 +1,161 @@
+CREATE TABLE branch(
+	branch_name varchar(20),
+	branch_city varchar(20),
+	assets float(10, 2),
+
+	PRIMARY KEY (branch_name)
+);
+
+CREATE TABLE customer(
+	customer_name varchar(20),
+	customer_street varchar(20),
+	customer_city varchar(20),
+
+	PRIMARY KEY (customer_name)
+);
+
+CREATE TABLE account(
+	account_no int(10),
+	branch_name varchar(20),
+	balance float(10,2),
+
+	PRIMARY KEY (account_no),
+	FOREIGN KEY(branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE loan(
+	loan_no int(10),
+	branch_name varchar(20),
+	amount float(10,2),
+
+	PRIMARY KEY (loan_no),
+	FOREIGN KEY(branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE depositor(
+	customer_name varchar(20),
+	account_no int(10),
+
+	FOREIGN KEY(account_no) REFERENCES account(account_no),
+	FOREIGN KEY(customer_name) REFERENCES customer(customer_name)
+);
+
+CREATE TABLE borrower(
+	customer_name varchar(20),
+	loan_no int(10),
+	FOREIGN KEY(loan_no) REFERENCES loan(loan_no),
+	FOREIGN KEY(customer_name) REFERENCES customer(customer_name)
+
+);
+
+
+
+# Adding enteries
+
+INSERT INTO branch
+		values('SBI', 'IIT PATNA', 2000.02)
+		      ('ABC', 'BIHTA', 20120.23),
+			  ('PNB', 'HISAR', 28930.45),
+			  ('BCD', 'DELHI', 24689.4),
+			  ('SBII', 'MUMBAI', 23880.3),
+			  ('SB', 'BANGALORE', 2840),
+			  ('SBID', 'HYDERABAD', 2800.45),
+			  ('SBIA', 'CHENNAI', 3384.56),
+			  ('SBIX', 'NOIDA', 94387.67),
+			  ('SBIY', 'PUNE', 23874.56);
+
+
+INSERT INTO account
+		values(12341, 'SBI', 27832.21),
+			  (12342, 'ABC', 72783.11),
+			  (12343, 'PNB', 37832.81),
+			  (12344, 'BCD', 27852.01),
+			  (12345, 'SBII', 27432.05),
+			  (12346, 'SB', 278356.34),
+			  (12347, 'SBID', 272232.70),
+			  (12348, 'SBIA', 278221.40),
+			  (12349, 'SBIX', 27823.5),
+			  (12340, 'SBIY', 27811.2);
+		
+
+INSERT INTO customer
+		values('Diksha', 'Sunder Nagar', 'Hisar'),
+			  ('Divya', 'Banaras', 'UP'),
+			  ('Divyanshu', 'Gurgaon', 'Haryana'),
+			  ('Rahul', 'ABC', 'Jalandhar'),
+			  ('Swadha', 'Varanasi', 'UP'),
+			  ('Diksha Bansal', 'Sunder Nagar', 'Hisar'),
+			  ('Divya Verma', 'Banaras', 'UP'),
+			  ('Divyanshu N Singh', 'Gurgaon', 'Haryana'),
+			  ('Rahul Grover', 'ABC', 'Jalandhar'),
+			  ('Swadha Pandey', 'Varanasi', 'UP');
+
+
+INSERT INTO loan
+		values(112341, 'SBI', 127832.21),
+			  (112342, 'ABC', 172783.11),
+			  (112343, 'PNB', 137832.81),
+			  (112344, 'BCD', 127852.01),
+			  (112345, 'SBII', 127432.05),
+			  (112346, 'SB', 1278356.34),
+			  (112347, 'SBID', 1272232.70),
+			  (112348, 'SBIA', 1278221.40),
+			  (112349, 'SBIX', 127823.5),
+			  (112340, 'SBIY', 127811.2);
+
+INSERT INTO depositor
+		values('Diksha' ,12341),
+			  ('Diksha Bansal' ,12342),
+			  ('Divyanshu' ,12343),
+			  ('Divyanshu N Singh' ,12344),
+			  ('Divya' ,12345),
+			  ('Divya Verma' ,12346),
+			  ('Swadha' ,12347),
+			  ('Swadha Pandey' ,12348),
+			  ('Rahul' ,12349),
+			  ('Rahul Grover' ,12340);
+
+
+INSERT INTO borrower
+		values('Diksha' ,112341),
+			  ('Diksha Bansal' ,112342),
+			  ('Divyanshu' ,112343),
+			  ('Divyanshu N Singh' ,112344),
+			  ('Divya' ,112345),
+			  ('Divya Verma' ,112346),
+			  ('Swadha' ,112347),
+			  ('Swadha Pandey' ,112348),
+			  ('Rahul' ,112349),
+			  ('Rahul Grover' ,112340);
+
+
+
+# Adding invalid enteries
+
+
+# 1. Out of range value for column 
+
+	INSERT INTO branch
+			values('SBAI', 'Hisar', 123456789123.12);
+	INSERT INTO customer
+		values('Diksha', 'Sunder Nagar, Near New Grain Market, Sirsa Road', 'Hisar');
+
+
+# 2.  Duplicate entry for key 'PRIMARY'
+	
+	INSERT INTO branch
+		values('SBI', 'IIT Patna, Bihta', 2000.02);
+	INSERT INTO loan
+		values(112341, 'SBIA', 1227832.21);
+
+
+
+# 3.  Cannot add or update a child row: a foreign key constraint fails
+	
+	INSERT INTO account
+		values(123412, 'SBAI', 27832.21);
+	INSERT INTO borrower
+		values('DikshaB' ,112341);
+	INSERT INTO depositor
+		values('DikshaB' ,12341);
+

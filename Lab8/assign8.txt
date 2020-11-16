@@ -1,0 +1,113 @@
+
+-- Task 1
+
+create table account(
+	anum int(5),
+	bname varchar(20),
+	balance int(6),
+	primary key(anum),
+	check(balance>=0)
+);
+
+create table custAcc(
+	anum int(5),
+	cname varchar(20),
+	primary key(anum, cname)
+);
+
+
+-- Task 2
+-- 1.
+
+delimiter $$
+create procedure procAccDummyData(in N int(5))
+    begin
+        declare random int(5);
+        declare bal int(5);
+        declare bno int(2);
+        declare bnam varchar(20);
+
+        declare cnt int default 0;
+        declare cntr int default 0;
+        WHILE cntr<N DO
+            select rand()*100000 into random;
+            select rand()*100000 into bal;
+            select rand()*100 into bno;
+            select concat('b', bno) into bnam;
+            SELECT count(anum) INTO cnt FROM account WHERE anum = random;
+            if(cnt=0) then
+                INSERT INTO account VALUES(random, bnam, bal);
+                SET cntr = cntr + 1;
+            end if;
+        END WHILE;
+    end $$
+delimiter ;
+
+
+The procedure 
+
+-- 2.
+
+delimiter $$
+create function funWithdraw(accno int(5), amount int(5))
+	returns int(5)
+	deterministic
+	begin
+	declare bal int(5);
+	declare ans int(5);
+	select balance from account where anum = accno into bal;
+	if (bal >= amount) then
+	set ans = bal - amount;
+	update account set balance = ans where anum = accno;
+	else
+	set ans = -1;
+	end if;
+	return (ans);
+	end$$
+
+delimiter ;
+
+
+-- 3.
+
+-- a.
+
+delimiter $$
+	CREATE TRIGGER before_custAcc_insert BEFORE INSERT
+	ON custAcc 
+	FOR EACH ROW 
+	BEGIN
+	if new.anum not in (select anum from account) then
+	SIGNAL SQLSTATE'45000'
+	set message_text = "anum doesn't exist";
+	end if;
+END $$
+delimiter ;
+
+-- This trigger is used to insert entry in custAcc table only if the account number exists in account table else it will display the error message
+
+-- b.
+
+
+create table accBalanceUpdate(
+	anum int(5),
+	balance int(6),
+	duo date,
+	tou timestamp
+);
+
+
+delimiter $$
+	create trigger before_account_update
+	before update
+	on account for each row
+	begin
+	insert into accBalanceUpdate values(old.anum, old.balance, curdate(), curtime());
+
+end $$
+delimiter ;
+
+-- select funWithdraw(293,10000);
+
+-- When we call the funWithdraw function, it checks whether the transaction is possible or not after that, if the transaction is possible it calls update command which
+-- further triggers the before_account_upgrade trigger which inserts the transaction entry in accBalanceUpdate
